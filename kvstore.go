@@ -81,7 +81,7 @@ func (s *kvstore) readCommits(commitC <-chan *string, errorC <-chan error) {
 			log.Fatalf("raftexample: could not decode message (%v)", err)
 		}
 		s.mu.Lock()
-		log.Println("readCommits k->", data_kv.Key, " v->", data_kv.Val)
+		//log.Println("readCommits k->", data_kv.Key, " v->", data_kv.Val)
 		s.kvStore[data_kv.Key] = data_kv.Val
 		s.mu.Unlock()
 		s.needFlush = false

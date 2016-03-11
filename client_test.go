@@ -8,33 +8,25 @@
 // distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
-// limitations under the License.
+// limitations under the License
 
 package raftrpc
 
-const (
-	OK           = "OK"
-	ErrNoKey     = "ErrNoKey"
-	InvalidParam = "Invalid Parameter"
+import (
+	"log"
+	"os"
+	"testing"
 )
 
-type Err string
+func TestClientWithSingleServer(t *testing.T) {
+	srv := StartServer("127.0.0.1:1234", 1)
 
-type PutArgs struct {
-	Key   string
-	Value string
-}
-
-type PutReply struct {
-	Err           Err
-	PreviousValue string
-}
-
-type GetArgs struct {
-	Key string
-}
-
-type GetReply struct {
-	Err   Err
-	Value string
+	client := MakeClerk("127.0.0.1:1234")
+	client.Put("t1", "v1")
+	log.Println("got:", ret)
+	if ret != "v1" {
+		t.Error("Client get error:", ret)
+	}
+	srv.kill()
+	os.RemoveAll("raftexample-1")
 }

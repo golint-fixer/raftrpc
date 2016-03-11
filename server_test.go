@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"testing"
-	"time"
 )
 
 func TestSingleServer(t *testing.T) {
@@ -87,9 +86,6 @@ func TestTwoServers(t *testing.T) {
 	}
 	log.Println(">>", reP, err)
 
-	//log.Printf("** Sleeping to visualize heartbeat between nodes **\n")
-	//time.Sleep(3000 * time.Millisecond)
-
 	argG := GetArgs{Key: "test1"}
 	var reG GetReply
 	err = srv1.Get(&argG, &reG)
@@ -97,19 +93,13 @@ func TestTwoServers(t *testing.T) {
 		t.Error("Error happen on ", err, reG)
 	}
 
-	//currently srv1 is leader, ask value from srv2 will introduce error
-	//err = srv2.Get(&argG, &reG)
-	//if err == nil {
-	//t.Error("Error to request value from non-leader", err, reG)
-	//}
+	err = srv2.Get(&argG, &reG)
 	log.Println(">>", reG, err)
 	log.Println("Stop server..")
 
 	//Kill leader test
 	srv1.kill()
 	os.RemoveAll("raftexample-1")
-	log.Printf("** Sleeping to visualize heartbeat between nodes **\n")
-	time.Sleep(5000 * time.Millisecond)
 	err = srv2.Get(&argG, &reG)
 	if err != nil || reG.Value != "v3" {
 		t.Error("Error on kill leader happen on ", err, reG)
