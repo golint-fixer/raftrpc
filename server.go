@@ -92,19 +92,19 @@ func (kv *KVRaft) kill() {
 	//remove socket file
 }
 
-func StartServer(serversPort string, me int) *KVRaft {
-	return startServer(serversPort, me, []string{serversPort})
+func StartServer(rpcPort string, me int) *KVRaft {
+	return startServer(rpcPort, me, []string{rpcPort}, false)
 }
 
-func StartClusterServers(serversPort string, me int, cluster []string) *KVRaft {
-	return startServer(serversPort, me, cluster)
+func StartClusterServers(rpcPort string, me int, cluster []string) *KVRaft {
+	return startServer(rpcPort, me, cluster, false)
 }
 
-func StarServerJoinCluster() {
-
+func StarServerJoinCluster(rpcPort string, me int) *KVRaft {
+	return startServer(rpcPort, me, []string{rpcPort}, true)
 }
 
-func startServer(serversPort string, me int, cluster []string) *KVRaft {
+func startServer(serversPort string, me int, cluster []string, join bool) *KVRaft {
 	//gob.Register(Op{})
 
 	kv := new(KVRaft)
@@ -115,7 +115,6 @@ func startServer(serversPort string, me int, cluster []string) *KVRaft {
 	//defer close(proposeC)
 	confChangeC := make(chan raftpb.ConfChange)
 	//defer close(confChangeC)
-	join := false
 
 	//node
 	commitC, errorC, stopc := newRaftNode(me, cluster, join, proposeC, confChangeC)
