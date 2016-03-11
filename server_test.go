@@ -9,7 +9,7 @@ import (
 func TestSingleServer(t *testing.T) {
 	log.Println("TEST >>>>>TestSingleServer<<<<")
 
-	srv := StartServer(":1234", 1)
+	srv := StartClusterServers("127.0.0.1:1234", 1, []string{"127.0.0.1:1234"})
 
 	argP := PutArgs{Key: "test1", Value: "v1"}
 	var reP PutReply
@@ -26,6 +26,10 @@ func TestSingleServer(t *testing.T) {
 	}
 	log.Println(">>", reP, err)
 
+	if reP.PreviousValue != "v1" {
+		t.Error("Error on last value, expect v1, got :", reP.PreviousValue)
+	}
+
 	argP = PutArgs{Key: "test1", Value: "v3"}
 	err = srv.Put(&argP, &reP)
 	if err != nil {
@@ -33,8 +37,9 @@ func TestSingleServer(t *testing.T) {
 	}
 	log.Println(">>", reP, err)
 
-	log.Printf("** Sleeping to visualize heartbeat between nodes **\n")
-	time.Sleep(2000 * time.Millisecond)
+	if reP.PreviousValue != "v2" {
+		t.Error("Error on last value, expect v1, got :", reP.PreviousValue)
+	}
 
 	argG := GetArgs{Key: "test1"}
 	var reG GetReply
@@ -52,11 +57,11 @@ func TestTwoServers(t *testing.T) {
 	log.Println("TEST >>>>>TestTwoServers<<<<")
 
 	var serverList []string
-	serverList = append(serverList, ":1234")
-	serverList = append(serverList, ":1235")
+	serverList = append(serverList, "127.0.0.1:10001")
+	serverList = append(serverList, "127.0.0.1:10002")
 
-	srv1 := StartClusterServers(":1234", 1, serverList)
-	srv2 := StartClusterServers(":1235", 2, serverList)
+	srv1 := StartClusterServers(serverList[0], 1, serverList)
+	srv2 := StartClusterServers(serverList[1], 2, serverList)
 
 	argP := PutArgs{Key: "test1", Value: "v1"}
 	var reP PutReply

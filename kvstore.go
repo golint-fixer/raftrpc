@@ -19,13 +19,15 @@ import (
 	"encoding/gob"
 	"log"
 	"sync"
+	"time"
 )
 
 // a key-value store backed by raft
 type kvstore struct {
-	proposeC chan<- string // channel for proposing updates
-	mu       sync.RWMutex
-	kvStore  map[string]string // current committed key-value pairs
+	proposeC  chan<- string // channel for proposing updates
+	mu        sync.RWMutex
+	kvStore   map[string]string // current committed key-value pairs
+	needFlush bool
 }
 
 type kv struct {
@@ -43,6 +45,11 @@ func newKVStore(proposeC chan<- string, commitC <-chan *string, errorC <-chan er
 }
 
 func (s *kvstore) Lookup(key string) (string, bool) {
+	//log.Println("Kv find K=", key, " map:", s.kvStore)
+	for s.needFlush {
+		log.Printf("** wait a little bit to make sure data flush **\n")
+		time.Sleep(100 * time.Millisecond)
+	}
 	s.mu.RLock()
 	v, ok := s.kvStore[key]
 	s.mu.RUnlock()
@@ -50,6 +57,7 @@ func (s *kvstore) Lookup(key string) (string, bool) {
 }
 
 func (s *kvstore) Propose(k string, v string) {
+	s.needFlush = true
 	var buf bytes.Buffer
 	if err := gob.NewEncoder(&buf).Encode(kv{k, v}); err != nil {
 		log.Fatal(err)
@@ -58,6 +66,7 @@ func (s *kvstore) Propose(k string, v string) {
 }
 
 func (s *kvstore) readCommits(commitC <-chan *string, errorC <-chan error) {
+
 	for data := range commitC {
 		if data == nil {
 			// done replaying log; new data incoming
@@ -70,10 +79,13 @@ func (s *kvstore) readCommits(commitC <-chan *string, errorC <-chan error) {
 			log.Fatalf("raftexample: could not decode message (%v)", err)
 		}
 		s.mu.Lock()
+		log.Println("readCommits k->", data_kv.Key, " v->", data_kv.Val)
 		s.kvStore[data_kv.Key] = data_kv.Val
 		s.mu.Unlock()
+		s.needFlush = false
 	}
 	if err, ok := <-errorC; ok {
 		log.Fatal(err)
 	}
+
 }

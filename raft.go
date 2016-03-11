@@ -178,6 +178,7 @@ func (rc *raftNode) writeError(err error) {
 }
 
 func (rc *raftNode) startRaft() {
+	//log.Println("Raft start....")
 	oldwal := wal.Exist(rc.waldir)
 	rc.wal = rc.replayWAL()
 
@@ -217,8 +218,10 @@ func (rc *raftNode) startRaft() {
 	}
 
 	rc.transport.Start()
+	log.Println(" peer size:", len(rc.peers))
 	for i := range rc.peers {
 		if i+1 != rc.id {
+			log.Println("Transport: ID:", i, " addr:", rc.peers[i])
 			rc.transport.AddPeer(types.ID(i+1), []string{rc.peers[i]})
 		}
 	}
@@ -254,6 +257,7 @@ func (rc *raftNode) serveChannels() {
 		for rc.proposeC != nil && rc.confChangeC != nil {
 			select {
 			case prop, ok := <-rc.proposeC:
+				//log.Println("Go propose:", prop)
 				if !ok {
 					rc.proposeC = nil
 				} else {
