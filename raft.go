@@ -60,7 +60,7 @@ type raftNode struct {
 // commit channel, followed by a nil message (to indicate the channel is
 // current), then new log entries. To shutdown, close proposeC and read errorC.
 func newRaftNode(id int, peers []string, join bool, proposeC <-chan string,
-	confChangeC <-chan raftpb.ConfChange) (<-chan *string, <-chan error) {
+	confChangeC <-chan raftpb.ConfChange) (<-chan *string, <-chan error, chan struct{}) {
 
 	rc := &raftNode{
 		proposeC:    proposeC,
@@ -78,7 +78,7 @@ func newRaftNode(id int, peers []string, join bool, proposeC <-chan string,
 		// rest of structure populated after WAL replay
 	}
 	go rc.startRaft()
-	return rc.commitC, rc.errorC
+	return rc.commitC, rc.errorC, rc.httpstopc
 }
 
 // publishEntries writes committed log entries to commit channel and returns
@@ -222,7 +222,7 @@ func (rc *raftNode) startRaft() {
 	for i := range rc.peers {
 		if i+1 != rc.id {
 			log.Println("Transport: ID:", i, " addr:", rc.peers[i])
-			rc.transport.AddPeer(types.ID(i+1), []string{rc.peers[i]})
+			rc.transport.AddPeer(types.ID(i+1), []string{"http://" + rc.peers[i]})
 		}
 	}
 
@@ -239,6 +239,7 @@ func (rc *raftNode) stop() {
 }
 
 func (rc *raftNode) stopHTTP() {
+	log.Println("raft stop............")
 	rc.transport.Stop()
 	close(rc.httpstopc)
 	<-rc.httpdonec

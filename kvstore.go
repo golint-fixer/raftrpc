@@ -46,9 +46,11 @@ func newKVStore(proposeC chan<- string, commitC <-chan *string, errorC <-chan er
 
 func (s *kvstore) Lookup(key string) (string, bool) {
 	//log.Println("Kv find K=", key, " map:", s.kvStore)
-	for s.needFlush {
+	flushLimit := 0
+	for s.needFlush && flushLimit < 10 {
 		log.Printf("** wait a little bit to make sure data flush **\n")
-		time.Sleep(100 * time.Millisecond)
+		time.Sleep(500 * time.Millisecond)
+		flushLimit++
 	}
 	s.mu.RLock()
 	v, ok := s.kvStore[key]

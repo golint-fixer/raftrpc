@@ -13,7 +13,6 @@
 package raftrpc
 
 import (
-	"encoding/gob"
 	"errors"
 	"fmt"
 	"log"
@@ -35,10 +34,6 @@ func DPrintf(format string, a ...interface{}) (n int, err error) {
 	return
 }
 
-//Op Basic Raft OP here
-type Op struct {
-}
-
 type KVRaft struct {
 	mu         sync.Mutex
 	l          net.Listener
@@ -47,7 +42,8 @@ type KVRaft struct {
 	unreliable bool // for testing
 
 	// Your definitions here.
-	store *kvstore
+	store    *kvstore
+	srvStopc chan struct{}
 }
 
 func (kv *KVRaft) Get(args *GetArgs, reply *GetReply) error {
@@ -92,8 +88,7 @@ func (kv *KVRaft) Put(args *PutArgs, reply *PutReply) error {
 func (kv *KVRaft) kill() {
 	DPrintf("Kill(%d): die\n", kv.me)
 	kv.dead = true
-	kv.l.Close()
-	//kv.raftNode.stop()
+	close(kv.srvStopc)
 	//remove socket file
 }
 
@@ -110,7 +105,7 @@ func StarServerJoinCluster() {
 }
 
 func startServer(serversPort string, me int, cluster []string) *KVRaft {
-	gob.Register(Op{})
+	//gob.Register(Op{})
 
 	kv := new(KVRaft)
 	rpcs := rpc.NewServer()
@@ -123,7 +118,8 @@ func startServer(serversPort string, me int, cluster []string) *KVRaft {
 	join := false
 
 	//node
-	commitC, errorC := newRaftNode(me, cluster, join, proposeC, confChangeC)
+	commitC, errorC, stopc := newRaftNode(me, cluster, join, proposeC, confChangeC)
+	kv.srvStopc = stopc
 
 	//kvstore
 	kv.store = newKVStore(proposeC, commitC, errorC)
