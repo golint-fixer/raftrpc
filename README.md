@@ -1,19 +1,21 @@
 RaftRPC: Simple RPC Key Value Server using etcd/Raft in Golang
 ==============
 
-[![GitHub license](https://img.shields.io/badge/license-MIT-blue.svg)](https://raw.githubusercontent.com/kkdai/pd/master/LICENSE)  [![GoDoc](https://godoc.org/github.com/kkdai/raftrpc?status.svg)](https://godoc.org/github.com/kkdai/raftrpc)  [![Build Status](https://travis-ci.org/kkdai/raftrpc.svg?branch=master)](https://travis-ci.org/kkdai/raftrpc)
+[![GoDoc](https://godoc.org/github.com/kkdai/raftrpc?status.svg)](https://godoc.org/github.com/kkdai/raftrpc)  [![Build Status](https://travis-ci.org/kkdai/raftrpc.svg?branch=master)](https://travis-ci.org/kkdai/raftrpc)
 
 
 
 What is Raft RPC Server/Client
 =============
 
-This is a simple KV Server (Key/Value) server using raft consensus technology(implement by.
+This is a simple KV Server (Key/Value) server using [raft consensus algorithm](https://github.com/coreos/etcd). (implement by [CoreOS/etcd](https://github.com/coreos/etcd)).
+
+It provide a basic RPC Client/Server for K/V(Key Value) storage service.
 
 What is Raft
 =============
 
-
+Raft is a consensus algorithm that is designed to be easy to understand. It's equivalent to Paxos in fault-tolerance and performance. The difference is that it's decomposed into relatively independent subproblems, and it cleanly addresses all major pieces needed for practical systems. We hope Raft will make consensus available to a wider audience, and that this wider audience will be able to develop a variety of higher quality consensus-based systems than are available today. (quote from [here](https://raft.github.io/))
 
 
 Installation and Usage
